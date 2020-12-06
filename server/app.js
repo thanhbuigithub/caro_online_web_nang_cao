@@ -12,9 +12,6 @@ require('dotenv').config({ path: './configs/.env' });
 
 // Connect to mongo DB
 connectDB();
-mongoose.connection.on('connected', () => {
-    console.log('Connect DataBase Succesfully !!!');
-});
 
 //Middleware
 app.use(bodyParser.json());
@@ -23,6 +20,11 @@ app.use(cors());
 app.get("/", (req, res) => {
     res.send("Repo for Caro Online Web App");
 });
+
+//Page not found
+app.use((req, res) => {
+    res.status(404).json({ message: 'Page Not Found' })
+})
 
 // Route Middleware
 // app.use("/api/user", authRoute);
