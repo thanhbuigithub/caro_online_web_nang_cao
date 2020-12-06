@@ -4,11 +4,16 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const connectDB = require('./configs/database');
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const path = require('path');
 
 // CONFIG .env
-require('dotenv').config({ path: './configs/.env' });
+require('dotenv').config();
+
+// Import Routers
+const authRouter = require('./routers/auth.router');
+
+
 
 // Connect to mongo DB
 connectDB();
@@ -21,14 +26,15 @@ app.get("/", (req, res) => {
     res.send("Repo for Caro Online Web App");
 });
 
+// Route Middleware
+app.use('/api/user', authRouter);
+// app.use("/api/admin", adminRoute);
+
+
 //Page not found
 app.use((req, res) => {
     res.status(404).json({ message: 'Page Not Found' })
 })
-
-// Route Middleware
-// app.use("/api/user", authRoute);
-// app.use("/api/admin", adminRoute);
 
 // Run app
 const PORT = process.env.PORT || 5000
