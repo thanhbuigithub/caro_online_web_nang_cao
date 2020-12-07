@@ -7,9 +7,10 @@ const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { errorHandler } = require('../helpers/errorHandle');
 const sgMail = require('@sendgrid/mail');
-const client = new OAuth2Client(process.env.GOOGLE_KEY);
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT);
 
 sgMail.setApiKey(process.env.API_KEY);
+
 exports.registerController = async (req, res) => {
     const { username, email, password, name } = req.body;
 
@@ -274,7 +275,7 @@ exports.googleLoginController = async (req, res) => {
 
             return res.json({
                 token,
-                user: { _id, email, name, username }
+                user: { _id, email, name, username, isAdmin }
             });
         } else {
             let password = email + process.env.JWT_SECRET;
@@ -296,6 +297,7 @@ exports.googleLoginController = async (req, res) => {
                         email,
                         name,
                         username,
+                        isAdmin
                     }
                 });
             } catch (error) {
@@ -313,137 +315,53 @@ exports.googleLoginController = async (req, res) => {
 }
 
 exports.facebookLoginController = (req, res) => {
-    const { userID, accessToken } = req.body;
-    const url = `https://graph.facebook.com/v2.11/${userID}/?fields=id,name,email&access_token=${accessToken}`;
+    const { user_id, access_token } = req.body;
+    const url = `https://graph.facebook.com/v2.11/${user_id}/?fields=id,name,email&access_token=${access_token}`;
     return (
         fetch(url, {
             method: 'GET'
-        }).then(response => response.json()).then(response => {
+        }).then(response => response.json()).then(async (response) => {
             const { email, name } = response;
-            User.findOne({ email }).exec((err, user) => {
-                if (err) {
-                    return response.status(400).json({
-                        error: 'Đăng nhập Facebook xảy ra lỗi'
-                    })
-                } else {
-                    if (user) {
-                        const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-                            expiresIn: '20d'
-                        });
-                        const { _id, email, name, listBoardId } = user;
-                        // const listBoardId = user.listBoardId;
-                        // let resultlistBoard = [];
-                        // listBoardId.forEach((element, index) => {
-                        //     Board.findById(element).exec((err, board) => {
-                        //         if (err || !board) {
-                        //             return res.json({
-                        //                 token,
-                        //                 user: {
-                        //                     _id,
-                        //                     name,
-                        //                     email,
-                        //                     listBoardId: user.listBoardId,
-                        //                     resultlistBoard: []
-                        //                 }
-                        //             });
-                        //         } else {
-                        //             resultlistBoard.push(board);
-                        //             if (index === listBoardId.length - 1) {
-                        //                 return res.json({
-                        //                     token,
-                        //                     user: {
-                        //                         _id,
-                        //                         name,
-                        //                         email,
-                        //                         listBoardId: user.listBoardId,
-                        //                         resultlistBoard: resultlistBoard
-                        //                     }
-                        //                 });
-                        //             }
-                        //         }
+            const user = await User.findOne({ email: email });
+            if (user) {
+                const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+                    expiresIn: '20d'
+                });
+                const { _id, email, name, listBoardId } = user;
 
-                        //     });
-                        // });
-                        return res.json({
-                            token,
-                            user: {
-                                _id, email, name, listBoardId
-                            }
-                        });
-                    } else {
-                        let password = email + process.env.JWT_SECRET;
-                        user = new User({ name, email, password });
-                        user.save((err, data) => {
-                            if (err) {
-                                return res.status(400).json({
-                                    error: 'Đăng kí Facebook không thành công'
-                                });
-                            }
-                            const token = jwt.sign(
-                                { _id: data._id },
-                                process.env.JWT_SECRET,
-                                { expiresIn: '20d' }
-                            );
-                            const { _id, email, name, listBoardId } = data;
-                            // const listBoardId = user.listBoardId;
-                            // let resultlistBoard = [];
-                            // if (!listBoardId || listBoardId.length === 0) {
-                            //     return res.json({
-                            //         token,
-                            //         user: {
-                            //             _id,
-                            //             name,
-                            //             email,
-                            //             listBoardId: user.listBoardId,
-                            //             resultlistBoard: []
-                            //         }
-                            //     });
-                            // }
-                            // listBoardId.forEach((element, index) => {
-                            //     Board.findById(element).exec((err, board) => {
-                            //         if (err || !board) {
-                            //             return res.json({
-                            //                 token,
-                            //                 user: {
-                            //                     _id,
-                            //                     name,
-                            //                     email,
-                            //                     listBoardId: user.listBoardId,
-                            //                     resultlistBoard: []
-                            //                 }
-                            //             });
-                            //         } else {
-                            //             resultlistBoard.push(board);
-                            //             if (index === listBoardId.length - 1) {
-                            //                 return res.json({
-                            //                     token,
-                            //                     user: {
-                            //                         _id,
-                            //                         name,
-                            //                         email,
-                            //                         listBoardId: user.listBoardId,
-                            //                         resultlistBoard: resultlistBoard
-                            //                     }
-                            //                 });
-                            //             }
-                            //         }
-
-                            //     });
-                            // });
-                            return res.json({
-                                token,
-                                user: {
-                                    _id, email, name, listBoardId
-                                }
-                            });
+                return res.json({
+                    token,
+                    user: {
+                        _id, email, name, listBoardId
+                    }
+                });
+            } else {
+                let password = email + process.env.JWT_SECRET;
+                user = new User({ name, email, password });
+                user.save((err, data) => {
+                    if (err) {
+                        return res.status(400).json({
+                            error: 'Đăng kí Facebook không thành công'
                         });
                     }
-                }
+                    const token = jwt.sign(
+                        { _id: data._id },
+                        process.env.JWT_SECRET,
+                        { expiresIn: '20d' }
+                    );
+                    const { _id, email, name, listBoardId } = data;
 
-            });
+                    return res.json({
+                        token,
+                        user: {
+                            _id, email, name, listBoardId
+                        }
+                    });
+                });
+            }
         }).catch(error => {
             res.json({
-                error: 'Đăng nhập Facebook không thành công ! Thử lại'
+                error: 'Facebook Login Error! Try again'
             });
         })
     );
