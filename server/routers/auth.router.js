@@ -7,5 +7,7 @@ const { validatorSignUp, validatorSignIn, validatorForgotPassword, validatorRese
 router.post('/register', validatorSignUp, registerController);
 router.post('/active', activeUserController);
 router.post('/login', validatorSignIn, loginController);
-
+router.post('/googlelogin', googleLoginController);
+router.put('/forgot_password', validatorForgotPassword, forgotPasswordController);
+router.put('/reset_password', validatorResetPassword, resetPasswordController);
 module.exports = router;

@@ -103,7 +103,7 @@ exports.activeUserController = (req, res) => {
     }
 }
 
-exports.forgotPasswordController = (req, res) => {
+exports.forgotPasswordController = async (req, res) => {
     const { email } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -112,24 +112,17 @@ exports.forgotPasswordController = (req, res) => {
             error: firstError
         });
     } else {
-        User.findOne({
-            email
-        }).exec((err, user) => {
-            if (err || !user) {
-                return res.status(400).json({
-                    errors: 'Tài khoản email không tồn tại'
-                });
-            }
+        const user = await User.findOne({ email: email });
+        if (user) {
             const token = jwt.sign(
                 {
                     _id: user._id
                 },
                 process.env.JWT_RESET_PASSWORD,
                 {
-                    expiresIn: '25m'
+                    expiresIn: '10m'
                 }
             );
-
             const emailMessage = {
                 from: process.env.MAIL_FROM,
                 to: email,
@@ -138,29 +131,27 @@ exports.forgotPasswordController = (req, res) => {
                 <p>${process.env.CLIENT_URL}/user/password/reset/${token}</p>
                 <hr />`
             }
-
-            return (
-                user.updateOne({ resetPassWordLink: token }, (err, user) => {
-                    if (err) {
-                        return res.status(400).json({
-                            error: 'Không thể kết nối tới DataBase để Reset PassWord'
-                        });
-                    } else {
-                        sgMail.send(emailMessage).then(sent => {
-                            return res.json({
-                                message: `Link Reset PassWord đã được gửi tới ${email} `
-                            });
-                        }).catch(err => {
-                            return res.status(400).json({
-                                message: err.message
-                            });
-                        });
-                    }
-                }
-                )
-            );
-
-        });
+            try {
+                const userUpdate = await user.updateOne({ resetPassWordLink: token });
+                sgMail.send(emailMessage).then(sent => {
+                    return res.json({
+                        message: `Link Reset PassWord đã được gửi tới ${email} `
+                    });
+                }).catch(err => {
+                    return res.status(400).json({
+                        message: err.message
+                    });
+                });
+            } catch (error) {
+                return res.status(400).json({
+                    error: errorHandler(error),
+                });
+            }
+        } else {
+            return res.status(400).json({
+                error: 'Tài khoản email không tồn tại'
+            });
+        }
     }
 }
 
@@ -170,14 +161,14 @@ exports.resetPasswordController = (req, res) => {
     if (!errors.isEmpty()) {
         const firstError = errors.array().map(error => error.msg)[0];
         return res.status(422).json({
-            errors: firstError
+            error: firstError
         });
     } else {
         if (resetPassWordLink) {
             jwt.verify(resetPassWordLink, process.env.JWT_RESET_PASSWORD, (err, decoded) => {
                 if (err) {
                     return res.status(400).json({
-                        error: 'Liên kết đã hết hạn ! Thử lại'
+                        error: 'Reset link expired ! Try again'
                     });
                 }
                 User.findOne({
@@ -185,7 +176,7 @@ exports.resetPasswordController = (req, res) => {
                 }).exec((err, user) => {
                     if (err || !user) {
                         return res.status(400).json({
-                            error: 'Hệ thống có lỗi ! Vui lòng thử lại'
+                            error: 'Something is error ! Try again'
                         });
                     }
                     const passwordObject = {
@@ -196,17 +187,16 @@ exports.resetPasswordController = (req, res) => {
                     user.save((err, result) => {
                         if (err) {
                             return res.status(400).json({
-                                message: 'Lỗi Reset PassWord'
+                                message: 'Error Reset Password'
                             });
                         } else {
                             return res.json({
-                                message: 'Đổi mật khẩu thành công'
+                                message: 'Change password successfully'
                             })
                         }
 
                     }
                     )
-
                 });
             })
         }
@@ -262,134 +252,63 @@ exports.loginController = (req, res) => {
     }
 }
 
-exports.googleLoginController = (req, res) => {
-    const { idToken } = req.body;
+exports.googleLoginController = async (req, res) => {
+    const { id_token } = req.body;
 
-    client.verifyIdToken({ idToken, audience: process.env.GOOGLE_KEY }).then(response => {
-        const { email_verified, name, email } = response.payload;
-        if (email_verified) {
-            User.findOne({ email }).exec((err, user) => {
-                if (user) {
-                    const token = jwt.sign({
-                        _id: user._id
-                    }, process.env.JWT_SECRET, {
-                        expiresIn: '20d'
-                    });
-                    const { _id, email, name, listBoardId } = user;
+    const google_client_res = await client.verifyIdToken({
+        idToken: id_token,
+        audience: process.env.GOOGLE_CLIENT,
+    });
+    const { email_verified, name, email } = google_client_res.payload;
 
-                    // const listBoardId = user.listBoardId;
-                    // let resultlistBoard = [];
-                    // listBoardId.forEach((element, index) => {
-                    //     Board.findById(element).exec((err, board) => {
-                    //         if (err || !board) {
-                    //             return res.json({
-                    //                 token,
-                    //                 user: {
-                    //                     _id,
-                    //                     name,
-                    //                     email,
-                    //                     listBoardId: user.listBoardId,
-                    //                     resultlistBoard: []
-                    //                 }
-                    //             });
-                    //         } else {
-                    //             resultlistBoard.push(board);
-                    //             if (index === listBoardId.length - 1) {
-                    //                 return res.json({
-                    //                     token,
-                    //                     user: {
-                    //                         _id,
-                    //                         name,
-                    //                         email,
-                    //                         listBoardId: user.listBoardId,
-                    //                         resultlistBoard: resultlistBoard
-                    //                     }
-                    //                 });
-                    //             }
-                    //         }
+    if (email_verified) {
+        const user = await User.findOne({ email: email });
 
-                    //     });
-                    // });
+        if (user) {
+            const token = jwt.sign({
+                _id: user._id
+            }, process.env.JWT_SECRET, {
+                expiresIn: '20d'
+            });
+            const { _id, email, name, username } = user;
 
-                    return res.json({
-                        token,
-                        user: { _id, email, name, listBoardId }
-                    });
-                } else {
-                    let password = email + process.env.JWT_SECRET;
-                    user = new User({ name, email, password });
-                    user.save((err, data) => {
-                        if (err) {
-                            return res.status(400).json({
-                                error: errorHandler(err)
-                            });
-                        }
-                        const token = jwt.sign(
-                            { _id: data._id }, process.env.JWT_SECRET, { expiresIn: '20d' }
-                        );
-                        const { _id, email, name, listBoardId } = data;
-                        // const listBoardId = user.listBoardId;
-
-                        // if (!listBoardId || listBoardId.length === 0) {
-                        //     return res.json({
-                        //         token,
-                        //         user: {
-                        //             _id,
-                        //             name,
-                        //             email,
-                        //             listBoardId: data.listBoardId,
-                        //             resultlistBoard: []
-                        //         }
-                        //     });
-                        // }
-
-                        // let resultlistBoard = [];
-                        // listBoardId.forEach((element, index) => {
-                        //     Board.findById(element).exec((err, board) => {
-                        //         if (err || !board) {
-                        //             return res.json({
-                        //                 token,
-                        //                 user: {
-                        //                     _id,
-                        //                     name,
-                        //                     email,
-                        //                     listBoardId: user.listBoardId,
-                        //                     resultlistBoard: []
-                        //                 }
-                        //             });
-                        //         } else {
-                        //             resultlistBoard.push(board);
-                        //             if (index === listBoardId.length - 1) {
-                        //                 return res.json({
-                        //                     token,
-                        //                     user: {
-                        //                         _id,
-                        //                         name,
-                        //                         email,
-                        //                         listBoardId: user.listBoardId,
-                        //                         resultlistBoard: resultlistBoard
-                        //                     }
-                        //                 });
-                        //             }
-                        //         }
-
-                        //     });
-                        // });
-                        return res.json({
-                            token,
-                            user: {
-                                _id, email, name, listBoardId,
-                            }
-                        });
-                    });
-                }
+            return res.json({
+                token,
+                user: { _id, email, name, username }
             });
         } else {
-            return res.status(400).json({
-                error: 'Đăng nhập Google thất bại'
+            let password = email + process.env.JWT_SECRET;
+            user = new User({
+                username: email,
+                name: name,
+                email: email,
+                password: password
             });
+            try {
+                const savedUser = await user.save();
+                const token = jwt.sign(
+                    { _id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '20d' }
+                );
+                return res.json({
+                    token,
+                    user: {
+                        _id,
+                        email,
+                        name,
+                        username,
+                    }
+                });
+            } catch (error) {
+                return res.status(400).json({
+                    error: errorHandler(err)
+                });
+            }
         }
-    });
+    } else {
+        return res.status(400).json({
+            error: 'Google Login Error! Try again'
+        });
+    }
 
 }
 
@@ -529,8 +448,4 @@ exports.facebookLoginController = (req, res) => {
         })
     );
 }
-
-// exports.requireSignin = expressJwt({
-//     secret: '176168hdsd821ie1iKDW'
-// });
 
