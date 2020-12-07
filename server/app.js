@@ -22,6 +22,11 @@ connectDB();
 app.use(bodyParser.json());
 app.use(cors());
 
+if (process.env.NODE_ENV === 'development') {
+    app.use(cors({ origin: process.env.CLIENT_URL }));
+    app.use(morgan('dev'));
+}
+
 app.get("/", (req, res) => {
     res.send("Repo for Caro Online Web App");
 });
