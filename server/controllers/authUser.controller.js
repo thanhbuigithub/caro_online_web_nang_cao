@@ -20,10 +20,17 @@ exports.registerController = async (req, res) => {
             error: firstError,
         })
     } else {
-        const isUserExist = await User.findOne({ email: email });
-        if (isUserExist) {
+        const isUserEmailExist = await User.findOne({ email: email });
+        if (isUserEmailExist) {
             return res.status(400).json({
                 errors: 'The Email already exists',
+            })
+        }
+
+        const isUsernameExist = await User.findOne({ username: username });
+        if (isUsernameExist) {
+            return res.status(400).json({
+                errors: 'The Username already exists',
             })
         }
 
@@ -65,12 +72,13 @@ exports.activeUserController = (req, res) => {
         jwt.verify(token, process.env.JWT_USER_ACTIVE, (err, decoded) => {
             if (err) {
                 return res.status(404).json({
-                    errors: 'Liên kết đã hết hạn ! Đăng kí lại'
+                    errors: 'Token Expired ! Signup Again'
                 })
             } else {
-                const { name, email, password } = jwt.decode(token);
+                const { name, username, email, password } = jwt.decode(token);
                 const user = new User({
                     email,
+                    username,
                     name,
                     password,
                 });
@@ -81,9 +89,8 @@ exports.activeUserController = (req, res) => {
                         })
                     } else {
                         return res.json({
-                            success: true,
                             user,
-                            message: 'Đăng kí tài khoản thành công'
+                            message: 'Register successfully!'
                         });
                     }
                 });
@@ -91,7 +98,7 @@ exports.activeUserController = (req, res) => {
         })
     } else {
         return res.json({
-            message: 'Xảy ra lỗi ! Vui lòng đăng kí lại',
+            message: 'Error something ! Register again',
         });
     }
 }
@@ -156,6 +163,7 @@ exports.forgotPasswordController = (req, res) => {
         });
     }
 }
+
 exports.resetPasswordController = (req, res) => {
     const { newPassWord, resetPassWordLink } = req.body;
     const errors = validationResult(req);
@@ -205,26 +213,27 @@ exports.resetPasswordController = (req, res) => {
 
     }
 }
+
 exports.loginController = (req, res) => {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const firstError = errors.array().map(error => error.msg)[0];
         return res.status(422).json({
-            errors: firstError
+            error: firstError
         });
     } else {
         User.findOne({
-            email
+            username
         }).exec((err, user) => {
             if (err || !user) {
                 return res.status(400).json({
-                    errors: 'Tài khoản email chưa đăng kí'
+                    error: 'Username is wrong'
                 });
             }
             if (!user.authenticate(password)) {
                 return res.status(400).json({
-                    errors: 'Email hoặc mật khẩu không trùng khớp'
+                    error: 'Password is wrong'
                 });
             }
 
@@ -234,53 +243,20 @@ exports.loginController = (req, res) => {
                 },
                 process.env.JWT_SECRET,
                 {
-                    expiresIn: '30d'
+                    expiresIn: '30d' // Remember me
                 }
             );
-            const { _id, name, email, listBoardId } = user;
+            const { _id, username, name, email, isAdmin } = user;
             return res.json({
                 token,
                 user: {
                     _id,
+                    username,
                     name,
                     email,
-                    listBoardId
+                    isAdmin
                 }
             });
-            // const { _id, name, email } = user;
-            // const listBoardId = user.listBoardId;
-            // let resultlistBoard = [];
-            // listBoardId.forEach((element, index) => {
-            //     Board.findById(element).exec((err, board) => {
-            //         if (err || !board) {
-            //             return res.json({
-            //                 token,
-            //                 user: {
-            //                     _id,
-            //                     name,
-            //                     email,
-            //                     listBoardId: user.listBoardId,
-            //                     resultlistBoard: []
-            //                 }
-            //             });
-            //         } else {
-            //             resultlistBoard.push(board);
-            //             if (index === listBoardId.length - 1) {
-            //                 return res.json({
-            //                     token,
-            //                     user: {
-            //                         _id,
-            //                         name,
-            //                         email,
-            //                         listBoardId: user.listBoardId,
-            //                         resultlistBoard: resultlistBoard
-            //                     }
-            //                 });
-            //             }
-            //         }
-
-            //     });
-            // });
 
         });
     }

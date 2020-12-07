@@ -5,5 +5,7 @@ const { registerController, loginController, googleLoginController, facebookLogi
 const { validatorSignUp, validatorSignIn, validatorForgotPassword, validatorResetPassword } = require('../helpers/validator');
 
 router.post('/register', validatorSignUp, registerController);
+router.post('/active', activeUserController);
+router.post('/login', validatorSignIn, loginController);
 
 module.exports = router;

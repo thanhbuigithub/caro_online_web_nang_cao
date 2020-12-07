@@ -2,6 +2,7 @@ const { check } = require('express-validator');
 
 exports.validatorSignUp = [
     check('name', 'Name không được rỗng !').notEmpty(),
+    check('username', 'Username không được rỗng !').notEmpty(),
     check('email').isEmail().withMessage('Email phải hợp lệ !'),
     check('password', 'Mật khẩu không được rỗng !').notEmpty(),
     check('password').isLength({
@@ -13,7 +14,8 @@ exports.validatorSignUp = [
 ]
 
 exports.validatorSignIn = [
-    check('email').isEmail().withMessage('Email phải hợp lệ !'),
+    // check('email').isEmail().withMessage('Email phải hợp lệ !'),
+    check('username', 'Username không được rỗng !').notEmpty(),
     check('password', 'Mật khẩu không được rỗng !').notEmpty(),
 ]
 
