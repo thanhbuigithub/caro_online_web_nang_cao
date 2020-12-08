@@ -17,6 +17,7 @@ import Slide from "@material-ui/core/Slide";
 import { TextField } from "@material-ui/core";
 import userApi from "../../api/userApi";
 import MuiAlert from "@material-ui/lab/Alert";
+import { io } from "socket.io-client";
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -40,6 +41,8 @@ function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
 
+let socket;
+
 function Header({}) {
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -52,6 +55,7 @@ function Header({}) {
   let history = useHistory();
 
   useEffect(() => {
+    socket = io(process.env.REACT_APP_ENDPOINT);
     const getProfile = async () => {
       try {
         const user = await userApi.getProfile();
@@ -156,6 +160,9 @@ function Header({}) {
 
   const handleLogout = () => {
     handleMenuClose();
+    const token = Auth.getAccessToken();
+    const user = jwt_decode(token);
+    socket.emit("user_disconnect", user.username);
     Auth.logout();
     history.push("/login");
   };

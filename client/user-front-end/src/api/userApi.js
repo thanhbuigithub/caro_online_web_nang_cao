@@ -51,6 +51,11 @@ const userApi = {
       access_token: access_token,
     });
   },
+
+  active: (token) => {
+    const url = "/user/active";
+    return axiosClient.post(url, { token: token });
+  },
 };
 
 export default userApi;

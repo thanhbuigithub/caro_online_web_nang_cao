@@ -20,7 +20,7 @@ const adminApi = {
   },
 
   changePassword: (oldPassword, newPassword) => {
-    const url = `/user/changePassword`;
+    const url = `/admin/changePassword`;
     return axiosClient.post(url, {
       oldPassword: oldPassword,
       newPassword: newPassword,

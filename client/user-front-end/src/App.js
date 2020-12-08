@@ -1,5 +1,6 @@
 import React from "react";
 import Login from "./components/login";
+import Active from "./components/active";
 import Home from "./components/dashboard";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import ProtectedRoute from "./components/common/router/protected";
@@ -8,6 +9,7 @@ import Register from "./components/register";
 
 const guestRoutes = [
   { path: "/login", component: Login, exact: true },
+  { path: "/user/active/:token", component: Active, exact: true },
   { path: "/register", component: Register, exact: true },
 ];
 
