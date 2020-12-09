@@ -1,17 +1,24 @@
-const User = require('../models/User.model');
+const User = require("../models/user.model");
 
 exports.readController = async (req, res) => {
-    const userId = req.params.id;
-    const user = await User.findById(userId);
-    if (user) {
-        user.hashPassword = undefined;
-        user.salt = undefined;
-        return res.json(user);
-    } else {
-        return res.status(400).json({
-            error: 'User not found'
-        });
-    }
+    const id = req.user.id;
+    const user = await User.findOne({ _id: id });
+    const sender = { id: user._id, name: user.name, email: user.email };
+    return res.status(200).send(sender);
+    // const userId = req.user.id;
+    // const user = await User.findById({ _id: userId });
+    // if (user) {
+    //     const sender = {
+    //         id: user._id,
+    //         name: user.name,
+    //         email: user.email
+    //     };
+    //     return res.status(200).send(sender);
+    // } else {
+    //     return res.status(400).json({
+    //         error: 'User not found'
+    //     });
+    // }
     // User.findById(userId).exec((err, user) => {
     //     if (err || !user) {
     //         return res.status(400).json({

@@ -43,7 +43,7 @@ function Alert(props) {
 
 let socket;
 
-function Header({}) {
+function Header({ }) {
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [oldPassword, setOldPassword] = useState("");

@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
+const { readController, updateController } = require("../controllers/user.controller");
+
 const {
   registerController,
   loginController,
@@ -10,12 +12,14 @@ const {
   forgotPasswordController,
   resetPasswordController,
 } = require("../controllers/authUser.controller");
+
 const {
   validatorSignUp,
   validatorSignIn,
   validatorForgotPassword,
   validatorResetPassword,
 } = require("../helpers/validator");
+
 const verifyToken = require("../helpers/verifyToken");
 
 router.post("/register", validatorSignUp, registerController);
@@ -35,4 +39,16 @@ router.put(
   validatorResetPassword,
   resetPasswordController
 );
+
+router.get("/profile",
+  verifyToken,
+  readController
+);
+
+router.put(
+  "/update",
+  verifyToken,
+  updateController
+);
+
 module.exports = router;

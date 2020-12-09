@@ -38,14 +38,14 @@ const userApi = {
   },
 
   loginGoogle: (id_token) => {
-    const url = `/user/google_login`;
+    const url = "/user/google_login";
     return axiosClient.post(url, {
       id_token: id_token,
     });
   },
 
   loginFacebook: (user_id, access_token) => {
-    const url = `/user/facebook_login`;
+    const url = "/user/facebook_login";
     return axiosClient.post(url, {
       user_id: user_id,
       access_token: access_token,

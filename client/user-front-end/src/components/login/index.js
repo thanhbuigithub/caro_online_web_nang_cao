@@ -198,16 +198,16 @@ function Login() {
                 <CircularProgress />
               </StyledButton>
             ) : (
-              <StyledButton
-                variant="contained"
-                className={classes.button}
-                backgroundColor={lightBlue}
-                textColor="white"
-                onClick={login}
-              >
-                LOGIN
-              </StyledButton>
-            )}
+                <StyledButton
+                  variant="contained"
+                  className={classes.button}
+                  backgroundColor={lightBlue}
+                  textColor="white"
+                  onClick={login}
+                >
+                  LOGIN
+                </StyledButton>
+              )}
           </div>
           <div className="register-button">
             <a href="/register" id="register">
@@ -255,7 +255,7 @@ function Login() {
             <GoogleLogin
               clientId={`${process.env.REACT_APP_GOOGLE_CLIENT_ID}`}
               onSuccess={responseGoogle}
-              onFailure={responseGoogle}
+              // onFailure={responseGoogle}
               cookiePolicy={"single_host_origin"}
               render={(renderProps) => (
                 <StyledButton
