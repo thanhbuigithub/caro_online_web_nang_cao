@@ -216,7 +216,7 @@ exports.loginController = (req, res) => {
                     _id: user._id,
                     username: user.username,
                 },
-                process.env.JWT_SECRET,
+                process.env.SECRET_KEY,
                 {
                     expiresIn: "30d", // Remember me
                 }
@@ -267,7 +267,7 @@ exports.googleLoginController = async (req, res) => {
                 {
                     id: user._id,
                 },
-                process.env.JWT_SECRET,
+                process.env.SECRET_KEY,
                 {
                     expiresIn: "20d",
                 }
@@ -275,7 +275,7 @@ exports.googleLoginController = async (req, res) => {
 
             return res.header("Authorization", token).send(token);
         } else {
-            let password = email + process.env.JWT_SECRET;
+            let password = email + process.env.SECRET_KEY;
             const newUser = new User({
                 username: email,
                 name: name,
@@ -284,7 +284,7 @@ exports.googleLoginController = async (req, res) => {
             });
             try {
                 const savedUser = await newUser.save();
-                const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, {
+                const token = jwt.sign({ id: savedUser._id }, process.env.SECRET_KEY, {
                     expiresIn: "20d",
                 });
                 return res.header("Authorization", token).send(token);
@@ -308,13 +308,13 @@ exports.facebookLoginController = async (req, res) => {
             const { email, name } = response;
             const user = await User.findOne({ email: email });
             if (user) {
-                const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+                const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
                     expiresIn: "20d",
                 });
 
                 return res.header("Authorization", token).send(token);
             } else {
-                let password = email + process.env.JWT_SECRET;
+                let password = email + process.env.SECRET_KEY;
                 const newUser = new User({
                     username: email,
                     name: name,
@@ -323,7 +323,7 @@ exports.facebookLoginController = async (req, res) => {
                 });
                 try {
                     const savedUser = await newUser.save();
-                    const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, {
+                    const token = jwt.sign({ id: savedUser._id }, process.env.SECRET_KEY, {
                         expiresIn: "20d",
                     });
                     return res.header("Authorization", token).send(token);
