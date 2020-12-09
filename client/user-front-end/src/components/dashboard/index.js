@@ -2,11 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import useStyles from "./muiStyle";
 import "./index.css";
-import { io } from "socket.io-client";
+import socketManager from "../../socketio/SocketManager";
 import jwt_decode from "jwt-decode";
 import Auth from "../common/router/auth";
-
-let socket;
 
 function Home() {
   const classes = useStyles();
@@ -16,13 +14,16 @@ function Home() {
   useEffect(() => {
     const token = Auth.getAccessToken();
     const user = jwt_decode(token);
-
-    socket = io(process.env.REACT_APP_ENDPOINT);
+    let socket = socketManager.getSocket();
     socket.emit("join", user.username);
     socket.on("new_connect", (list_user_online) => {
       console.log("New Connect");
       setListUserOnline(list_user_online);
     });
+
+    return () => {
+      socketManager.closeSocket();
+    };
   }, []);
 
   return (
@@ -30,7 +31,7 @@ function Home() {
       <div>Danh sách người chơi online:</div>
       <ul>
         {listUserOnline.map((user) => (
-          <li>{user}</li>
+          <li>{user.username}</li>
         ))}
       </ul>
     </div>
