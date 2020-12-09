@@ -35,7 +35,7 @@ exports.loginController = (req, res) => {
           _id: user._id,
           username: user.username,
         },
-        process.env.JWT_SECRET,
+        process.env.SECRET_KEY,
         {
           expiresIn: "30d", // Remember me
         }

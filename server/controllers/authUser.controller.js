@@ -272,7 +272,7 @@ exports.googleLoginController = async (req, res) => {
                     expiresIn: "20d",
                 }
             );
-
+            listUserOnline.push(user.username);
             return res.header("Authorization", token).send(token);
         } else {
             let password = email + process.env.SECRET_KEY;
@@ -287,6 +287,7 @@ exports.googleLoginController = async (req, res) => {
                 const token = jwt.sign({ id: savedUser._id }, process.env.SECRET_KEY, {
                     expiresIn: "20d",
                 });
+                listUserOnline.push(newUser.username);
                 return res.header("Authorization", token).send(token);
             } catch (error) {
                 return res.status(400).send(errorHandler(error));
@@ -311,7 +312,7 @@ exports.facebookLoginController = async (req, res) => {
                 const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
                     expiresIn: "20d",
                 });
-
+                listUserOnline.push(user.username);
                 return res.header("Authorization", token).send(token);
             } else {
                 let password = email + process.env.SECRET_KEY;
@@ -326,6 +327,7 @@ exports.facebookLoginController = async (req, res) => {
                     const token = jwt.sign({ id: savedUser._id }, process.env.SECRET_KEY, {
                         expiresIn: "20d",
                     });
+                    listUserOnline.push(newUser.username);
                     return res.header("Authorization", token).send(token);
                 } catch (error) {
                     return res.status(400).send(error);
