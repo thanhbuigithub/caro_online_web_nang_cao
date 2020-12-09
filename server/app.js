@@ -57,14 +57,13 @@ const io = require("socket.io")(server, {
 const listUserOnline = require("./object/listUserOnline");
 
 io.on("connection", (socket) => {
-  socket.on("join", () => {
-    //socket.join(boardId);
+  socket.on("join", (username) => {
+    listUserOnline.push(socket.id, username);
     io.emit("new_connect", listUserOnline.getAll());
   });
 
-  socket.on("user_disconnect", (username) => {
-    listUserOnline.remove(username);
-    //socket.join(boardId);
+  socket.on("disconnect", () => {
+    listUserOnline.remove(socket.id);
     io.emit("new_connect", listUserOnline.getAll());
   });
 });
