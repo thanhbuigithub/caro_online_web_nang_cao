@@ -14,6 +14,7 @@ function Home() {
   useEffect(() => {
     const token = Auth.getAccessToken();
     const user = jwt_decode(token);
+    console.log(user, token);
     let socket = socketManager.getSocket();
     socket.emit("join", user.username);
     socket.on("new_connect", (list_user_online) => {
