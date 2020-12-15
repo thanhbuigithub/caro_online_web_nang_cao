@@ -3,7 +3,7 @@ const User = require("../models/user.model");
 exports.readController = async (req, res) => {
     const id = req.user.id || req.user._id;
     const user = await User.findOne({ _id: id });
-    const sender = { id: user.id, name: user.name, email: user.email };
+    const sender = { id: id, name: user.name, email: user.email };
     return res.status(200).send(sender);
     // const userId = req.user.id;
     // const user = await User.findById({ _id: userId });
