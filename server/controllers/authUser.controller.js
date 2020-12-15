@@ -229,11 +229,6 @@ exports.loginController = (req, res) => {
   }
 };
 
-// exports.requireSignin = expressJwt({
-//     secret: process.env.JWT_SECRET,
-//     algorithms: ["RS256"], // or algorithms: ['HS256']
-// });
-
 exports.requireAdmin = async (req, res, next) => {
   const user = await User.findById({ _id: req.user._id });
   if (user) {
@@ -266,6 +261,7 @@ exports.googleLoginController = async (req, res) => {
       const token = jwt.sign(
         {
           id: user._id,
+          username: user.username,
         },
         process.env.SECRET_KEY,
         {
@@ -284,7 +280,7 @@ exports.googleLoginController = async (req, res) => {
       });
       try {
         const savedUser = await newUser.save();
-        const token = jwt.sign({ id: savedUser._id }, process.env.SECRET_KEY, {
+        const token = jwt.sign({ id: savedUser._id, username: user.username }, process.env.SECRET_KEY, {
           expiresIn: "20d",
         });
         //listUserOnline.push(newUser.username);
@@ -309,7 +305,7 @@ exports.facebookLoginController = async (req, res) => {
       const { email, name } = response;
       const user = await User.findOne({ email: email });
       if (user) {
-        const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+        const token = jwt.sign({ id: user._id, username: user.username }, process.env.SECRET_KEY, {
           expiresIn: "20d",
         });
         //listUserOnline.push(user.username);
@@ -325,7 +321,7 @@ exports.facebookLoginController = async (req, res) => {
         try {
           const savedUser = await newUser.save();
           const token = jwt.sign(
-            { id: savedUser._id },
+            { id: savedUser._id, username: user.username },
             process.env.SECRET_KEY,
             {
               expiresIn: "20d",
