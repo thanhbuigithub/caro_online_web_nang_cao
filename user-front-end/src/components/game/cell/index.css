@@ -1,0 +1,9 @@
+.cell {
+  display: inline-block;
+  border: 1px solid #ddd;
+  margin: 0;
+  float: left;
+  width: 26px;
+  height: 26px;
+  box-sizing: border-box;
+}
