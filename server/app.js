@@ -55,9 +55,11 @@ const io = require("socket.io")(server, {
 
 //Socket IO
 const listUserOnline = require("./object/listUserOnline");
+const listRooms = require("./object/listRooms");
 
 io.on("connection", (socket) => {
   socket.on("join", (username) => {
+    socket.username = username;
     listUserOnline.push(socket.id, username);
     io.emit("new_connect", listUserOnline.getAll());
   });
@@ -65,5 +67,36 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     listUserOnline.remove(socket.id);
     io.emit("new_connect", listUserOnline.getAll());
+  });
+
+  socket.on("join-room", (roomId) => {
+    console.log(`Room: ${socket.username} Join Room ${roomId}`);
+    let room = listRooms.addUser(roomId, socket.id);
+    if (room) {
+      console.log(`Room: ${socket.username} has joined to room ${roomId} `);
+      socket.roomId = room.id;
+      socket.join(room.id);
+      socket.emit("join-room-successful", room.id);
+      socket.to(socket.roomId).emit("new-player-join-room", socket.username);
+    } else {
+      socket.emit("join-room-failed");
+    }
+  });
+
+  socket.on("create-room", () => {
+    console.log(`Room: ${socket.username} Create Room...`);
+    let room = listRooms.createRoom(socket.id);
+    if (room) {
+      socket.roomId = room.id;
+      socket.join(room.id);
+      socket.emit("create-room-successful", room.id);
+    } else {
+      socket.emit("create-room-failed");
+    }
+  });
+
+  socket.on("move", (payload) => {
+    console.log(`Move: ${socket.username} move...`);
+    socket.to(socket.roomId).emit("move", payload);
   });
 });
