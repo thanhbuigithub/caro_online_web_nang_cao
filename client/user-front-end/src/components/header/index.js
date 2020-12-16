@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useHistory } from "react-router-dom";
 import jwt_decode from "jwt-decode";
 import Auth from "../common/router/auth";
@@ -17,7 +17,8 @@ import Slide from "@material-ui/core/Slide";
 import { TextField } from "@material-ui/core";
 import userApi from "../../api/userApi";
 import MuiAlert from "@material-ui/lab/Alert";
-import { io } from "socket.io-client";
+import socketManager from "../../socketio/SocketManager";
+import UserContext from "../../contexts/UserContext";
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -49,8 +50,26 @@ function Header({}) {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [error, setError] = useState("");
 
+  const { setListUserOnline } = useContext(UserContext);
+
   const [user, setUser] = useState({});
   let history = useHistory();
+
+  useEffect(() => {
+    const token = Auth.getAccessToken();
+    const user = jwt_decode(token);
+    console.log(user, token);
+    let socket = socketManager.getSocket();
+    socket.emit("join", user.username);
+    socket.on("new_connect", (list_user_online) => {
+      console.log("New Connect");
+      setListUserOnline(list_user_online);
+    });
+
+    // return () => {
+    //   socketManager.closeSocket();
+    // };
+  }, []);
 
   useEffect(() => {
     const getProfile = async () => {

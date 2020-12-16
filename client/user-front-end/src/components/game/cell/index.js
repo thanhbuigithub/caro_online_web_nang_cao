@@ -21,7 +21,7 @@ function checkWinCell(winCells, row, col) {
 
 function Cell({ value, row, col }) {
   const { playerType, turn, handleClick, winCells } = useContext(GameContext);
-  //const socket = SocketManager.getSocket();
+  const socket = SocketManager.getSocket();
 
   const needToDisable = false;
   const isPlayerX = playerType === config.playerX;
@@ -29,21 +29,23 @@ function Cell({ value, row, col }) {
   const isWinnerCell = checkWinCell(winCells, row, col);
 
   const onClick = () => {
-    console.log(`Cell: OnClick ${row} ${col}`);
     // Prevent user click if rival is disconnected
     if (needToDisable) {
       return;
     }
 
     // Prevent user click if not his turn
-    // if ((isPlayerX && !isTurnX) || (!isPlayerX && isTurnX)) {
-    //   return;
-    // }
+    if ((isPlayerX && !isTurnX) || (!isPlayerX && isTurnX)) {
+      return;
+    }
 
     // Send move to server if it is valid
     if (handleClick(row, col)) {
-      //socket.emit("move", { row: row, col: col });
+      console.log(`Socket: emit: move ${row} ${col}`);
+      socket.emit("move", { row: row, col: col });
     }
+
+    console.log(`Cell: OnClick ${row} ${col}`);
   };
 
   return (

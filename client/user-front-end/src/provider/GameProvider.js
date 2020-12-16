@@ -4,8 +4,6 @@ import GameContext from "../contexts/GameContext";
 import config from "../config/Config";
 
 export default (props) => {
-  const row = 20;
-  const column = 30;
   const [history, setHistory] = useState([
     {
       x: null,
@@ -24,7 +22,9 @@ export default (props) => {
   const [winCells, setWinCells] = useState(null);
   const [isWaiting, setIsWaiting] = useState(true);
   const [roomInfo, setRoomInfo] = useState({});
-  const [playerType, setPlayerType] = useState("");
+  const [playerType, setPlayerType] = useState(config.playerX);
+  const [roomId, setRoomId] = useState("");
+  const [chatHistory, setChatHistory] = useState({});
 
   function handleClick(row, col) {
     console.log("GameProvider: handleClick");
@@ -57,10 +57,12 @@ export default (props) => {
     );
 
     setStepNumber(curHistory.length);
-    console.log(curHistory);
+    console.log(curHistory[curHistory.length - 1]);
 
     let nextTurn = turn === config.playerX ? config.playerO : config.playerX;
-    setTurn(turn);
+    setTurn(nextTurn);
+
+    return true;
   }
 
   function checkWin(row, col, user, stepNumber) {
@@ -227,6 +229,8 @@ export default (props) => {
         roomInfo,
         playerType,
         handleClick,
+        setRoomId,
+        setPlayerType,
       }}
     >
       {props.children}
